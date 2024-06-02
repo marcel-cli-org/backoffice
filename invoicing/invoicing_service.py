@@ -1,44 +1,82 @@
-from flask import Flask, request, jsonify, render_template_string, Response
+from flask import Flask, jsonify, render_template_string, request
 import socket
 import os
 import setproctitle
-from prometheus_client import start_http_server, Counter, Histogram
-import time
+import requests
 from collections import defaultdict
+import time
+from prometheus_client import start_http_server, Counter, Histogram
 
 # Setzen des Prozessnamens
 setproctitle.setproctitle("invoicing")
 
 app = Flask(__name__)
 
-# Simulierter Speicher für Bestellungen
-orders = [
-    {"customer_id": 1, "customer_name": "John Doe", "id": 1, "product_id": 1, "product_name": "Land Rover Range Rover", "product_price": 150000, "quantity": 1, "total": 150000},
-    {"customer_id": 2, "customer_name": "Jane Smith", "id": 2, "product_id": 4, "product_name": "BMW 3er", "product_price": 60000, "quantity": 2, "total": 120000},
-    {"customer_id": 3, "customer_name": "Bob Johnson", "id": 3, "product_id": 8, "product_name": "Audi Q5", "product_price": 70000, "quantity": 1, "total": 70000},
-    {"customer_id": 1, "customer_name": "John Doe", "id": 4, "product_id": 16, "product_name": "Tesla Model 3", "product_price": 55000, "quantity": 3, "total": 165000},
-    {"customer_id": 2, "customer_name": "Jane Smith", "id": 5, "product_id": 19, "product_name": "Ford Mustang", "product_price": 60000, "quantity": 1, "total": 60000},
-    {"customer_id": 3, "customer_name": "Bob Johnson", "id": 6, "product_id": 22, "product_name": "Volkswagen Golf", "product_price": 45000, "quantity": 2, "total": 90000},
-    {"customer_id": 1, "customer_name": "John Doe", "id": 7, "product_id": 10, "product_name": "Mercedes-Benz C-Klasse", "product_price": 70000, "quantity": 1, "total": 70000}
-]
+# Get environment variable(s)
+SUFFIX = os.getenv('URL_SUFFIX', '')
+
+ORDER_SERVICE_URL = f"http://order{SUFFIX}:8080/order/api"
+CUSTOMER_SERVICE_URL = f"http://customer{SUFFIX}:8080/customer/api"
+CATALOG_SERVICE_URL = f"http://catalog{SUFFIX}:8080/catalog/api"
+
+# REST-Aufruf, um alle Bestellungen abzurufen
+def get_orders():
+    response = requests.get(ORDER_SERVICE_URL)
+    if response.status_code == 200:
+        return response.json()
+    return []
+
+# REST-Aufruf, um alle Kundeninformationen abzurufen
+def get_customers():
+    response = requests.get(CUSTOMER_SERVICE_URL)
+    if response.status_code == 200:
+        return response.json()
+    return []
+
+# REST-Aufruf, um alle Produktinformationen abzurufen
+def get_catalog():
+    response = requests.get(CATALOG_SERVICE_URL)
+    if response.status_code == 200:
+        return response.json()
+    return []
+
+# Funktion, um die Daten für die Tabellen aufzubereiten
+def process_data(orders, customers, catalog):
+    customers_dict = {customer["id"]: customer for customer in customers}
+    catalog_dict = {item["id"]: item for item in catalog}
+    
+    invoices = defaultdict(lambda: {"customer_name": "", "total_amount": 0.0, "entries": []})
+    for order in orders:
+        customer = customers_dict.get(order["customer_id"], {})
+        product = catalog_dict.get(order["product_id"], {})
+        
+        if customer and product:
+            total = order["quantity"] * product["price"]
+            invoices[order["customer_id"]]["customer_name"] = customer["name"]
+            invoices[order["customer_id"]]["total_amount"] += total
+            invoices[order["customer_id"]]["entries"].append({
+                "order_id": order["id"],
+                "product_name": product["name"],
+                "quantity": order["quantity"],
+                "product_price": product["price"],
+                "total": total
+            })
+    return invoices
 
 # Prometheus Metrics
 REQUEST_COUNT = Counter('invoicing_requests_total', 'Total number of requests to the invoicing service', ['method', 'endpoint', 'http_status'])
 REQUEST_LATENCY = Histogram('invoicing_request_latency_seconds', 'Request latency in seconds', ['method', 'endpoint'])
 
 @app.route('/invoicing/api', methods=['GET'])
-def get_invoicing():
+def get_invoices():
     start_time = time.time()
     try:
-        # Gruppieren und Summieren der Bestellungen pro Kunde
-        invoicing_summary = defaultdict(lambda: {"customer_name": "", "total_amount": 0.0, "entries": []})
-        for order in orders:
-            invoicing_summary[order["customer_id"]]["customer_name"] = order["customer_name"]
-            invoicing_summary[order["customer_id"]]["total_amount"] += order["total"]
-            invoicing_summary[order["customer_id"]]["entries"].append(order)
-
-        response_data = [{"customer_id": customer_id, "customer_name": details["customer_name"], "total_amount": details["total_amount"], "entries": details["entries"]} for customer_id, details in invoicing_summary.items()]
-
+        orders = get_orders()
+        customers = get_customers()
+        catalog = get_catalog()
+        
+        invoices = process_data(orders, customers, catalog)
+        response_data = [{"customer_id": customer_id, "customer_name": details["customer_name"], "total_amount": details["total_amount"], "entries": details["entries"]} for customer_id, details in invoices.items()]
         response = jsonify({"status": "success", "data": response_data})
         status = 200
     except Exception as e:
@@ -52,20 +90,18 @@ def get_invoicing():
     return response, status
 
 @app.route('/invoicing', methods=['GET'])
-def get_invoicing_html():
+def get_invoices_html():
     start_time = time.time()
     try:
-        # Gruppieren und Summieren der Bestellungen pro Kunde
-        invoicing_summary = defaultdict(lambda: {"customer_name": "", "total_amount": 0.0, "entries": []})
-        for order in orders:
-            invoicing_summary[order["customer_id"]]["customer_name"] = order["customer_name"]
-            invoicing_summary[order["customer_id"]]["total_amount"] += order["total"]
-            invoicing_summary[order["customer_id"]]["entries"].append(order)
-
-        response_data = [{"customer_id": customer_id, "customer_name": details["customer_name"], "total_amount": details["total_amount"], "entries": details["entries"]} for customer_id, details in invoicing_summary.items()]
+        orders = get_orders()
+        customers = get_customers()
+        catalog = get_catalog()
+        
+        invoices = process_data(orders, customers, catalog)
+        response_data = [{"customer_id": customer_id, "customer_name": details["customer_name"], "total_amount": details["total_amount"], "entries": details["entries"]} for customer_id, details in invoices.items()]
 
         hostname = socket.gethostname()
-        total_all = sum(details["total_amount"] for details in invoicing_summary.values())
+        total_all = sum(details["total_amount"] for details in invoices.values())
         html = """
         <!DOCTYPE html>
         <html lang="en">
@@ -96,7 +132,7 @@ def get_invoicing_html():
                             <tr>
                                 <td>{{ entry.customer_id }}</td>
                                 <td>{{ entry.customer_name }}</td>
-                                <td>{{ order.id }}</td>
+                                <td>{{ order.order_id }}</td>
                                 <td>{{ order.product_name }}</td>
                                 <td>{{ order.quantity }}</td>
                                 <td>${{ order.product_price }}</td>
@@ -135,35 +171,7 @@ def metrics():
     from prometheus_client import generate_latest
     return generate_latest(), 200
 
-@app.route('/invoicing/api/new', methods=['POST'])
-def add_order():
-    start_time = time.time()
-    try:
-        if not request.json or not 'customer_id' in request.json or not 'customer_name' in request.json or not 'amount' in request.json:
-            return jsonify({"error": "Bad Request"}), 400
-        
-        new_id = max(order['id'] for order in orders) + 1 if orders else 1
-        new_order = {
-            "id": new_id,
-            "customer_id": request.json['customer_id'],
-            "customer_name": request.json['customer_name'],
-            "amount": request.json['amount']
-        }
-        
-        orders.append(new_order)
-        response = jsonify(new_order)
-        status = 201
-    except Exception as e:
-        response = jsonify({"status": "error", "message": str(e)})
-        status = 500
-    finally:
-        request_latency = time.time() - start_time
-        REQUEST_COUNT.labels(method=request.method, endpoint=request.path, http_status=status).inc()
-        REQUEST_LATENCY.labels(method=request.method, endpoint=request.path).observe(request_latency)
-    
-    return response, status
-
 if __name__ == '__main__':
     # Start up the server to expose the metrics.
-    start_http_server(8000)
+    start_http_server(8001)
     app.run(host='0.0.0.0', port=8080)
