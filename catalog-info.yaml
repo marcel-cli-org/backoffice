@@ -18,6 +18,9 @@ kind: Component
 metadata:
   name: backoffice-shipment
   description: Handles shipping logistics.
+  annotations:
+    backstage.io/kubernetes-id: shipment    
+    gitlab.com/project-slug: ch-mc-b/autoshop-ms/app/backoffice  
 spec:
   type: service
   lifecycle: production
@@ -48,6 +51,9 @@ kind: Component
 metadata:
   name: backoffice-invoicing
   description: Invoice generation and processing.
+  annotations:
+    backstage.io/kubernetes-id: invoicing    
+    gitlab.com/project-slug: ch-mc-b/autoshop-ms/app/backoffice   
 spec:
   type: service
   lifecycle: production
