@@ -4,10 +4,12 @@ info:
   description: API documentation for the Invoicing Service in the backoffice application.
   version: 1.0.0
 servers:
-  - url: /api/invoicing
-    description: Base URL for the Invoicing Service
+  - url: http://dev.maas/webshop/invoicing
+    description: development server
+  - url: http://localhost/webshop/invoicing
+    description: Local development server 
 paths:
-  /invoices:
+  /invoicing/api:
     get:
       summary: Get a list of invoices
       description: Retrieve a list of all invoices.
@@ -32,7 +34,7 @@ paths:
       responses:
         '201':
           description: Invoice created successfully
-  /invoices/{invoiceId}:
+  /invoicing/api/{invoiceId}:
     get:
       summary: Get an invoice by ID
       description: Retrieve details of a specific invoice by its ID.

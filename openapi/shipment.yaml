@@ -4,12 +4,12 @@ info:
   description: API documentation for the Shipment Service in the Backoffice application.
   version: 1.0.0
 servers:
-  - url: https://api.example.com/shipment
-    description: Production server
-  - url: https://staging-api.example.com/shipment
-    description: Staging server
+  - url: http://dev.maas/webshop/shipment
+    description: development server
+  - url: http://localhost/webshop/shipment
+    description: Local development server 
 paths:
-  /shipments:
+  /shipment/api:
     get:
       summary: Get all shipments
       description: Retrieve a list of all shipments.
@@ -38,7 +38,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Shipment'
-  /shipments/{shipmentId}:
+  /shipment/api/{shipmentId}:
     get:
       summary: Get shipment by ID
       description: Retrieve details of a specific shipment by its ID.
