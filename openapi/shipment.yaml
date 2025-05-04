@@ -1,0 +1,83 @@
+openapi: 3.1.0
+info:
+  title: Shipment Service API
+  description: API documentation for the Shipment Service in the Backoffice application.
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/shipment
+    description: Production server
+  - url: https://staging-api.example.com/shipment
+    description: Staging server
+paths:
+  /shipments:
+    get:
+      summary: Get all shipments
+      description: Retrieve a list of all shipments.
+      responses:
+        '200':
+          description: A list of shipments.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Shipment'
+    post:
+      summary: Create a new shipment
+      description: Add a new shipment to the system.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewShipment'
+      responses:
+        '201':
+          description: Shipment created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shipment'
+  /shipments/{shipmentId}:
+    get:
+      summary: Get shipment by ID
+      description: Retrieve details of a specific shipment by its ID.
+      parameters:
+        - name: shipmentId
+          in: path
+          required: true
+          description: The ID of the shipment.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Shipment details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shipment'
+        '404':
+          description: Shipment not found.
+components:
+  schemas:
+    Shipment:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the shipment.
+        status:
+          type: string
+          description: The current status of the shipment.
+        createdAt:
+          type: string
+          format: date-time
+          description: The creation timestamp of the shipment.
+    NewShipment:
+      type: object
+      properties:
+        status:
+          type: string
+          description: The initial status of the shipment.
+      required:
+        - status

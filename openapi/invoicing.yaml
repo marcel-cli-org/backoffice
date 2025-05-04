@@ -1,0 +1,93 @@
+openapi: 3.1.0
+info:
+  title: Invoicing Service API
+  description: API documentation for the Invoicing Service in the backoffice application.
+  version: 1.0.0
+servers:
+  - url: /api/invoicing
+    description: Base URL for the Invoicing Service
+paths:
+  /invoices:
+    get:
+      summary: Get a list of invoices
+      description: Retrieve a list of all invoices.
+      responses:
+        '200':
+          description: A list of invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invoice'
+    post:
+      summary: Create a new invoice
+      description: Add a new invoice to the system.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+      responses:
+        '201':
+          description: Invoice created successfully
+  /invoices/{invoiceId}:
+    get:
+      summary: Get an invoice by ID
+      description: Retrieve details of a specific invoice by its ID.
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          description: The ID of the invoice
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '404':
+          description: Invoice not found
+    delete:
+      summary: Delete an invoice
+      description: Remove an invoice by its ID.
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          description: The ID of the invoice
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Invoice deleted successfully
+        '404':
+          description: Invoice not found
+components:
+  schemas:
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the invoice
+        amount:
+          type: number
+          format: float
+          description: Total amount of the invoice
+        date:
+          type: string
+          format: date
+          description: Date of the invoice
+        customerId:
+          type: string
+          description: ID of the customer associated with the invoice
+      required:
+        - id
+        - amount
+        - date
+        - customerId
