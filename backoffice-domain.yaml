@@ -5,6 +5,7 @@ metadata:
   title: Backoffice System
   description: Handles internal operations like shipment logistics and invoice management.
   annotations:
+    gitlab.com/project-slug: ch-mc-b/autoshop-ms/app/backoffice
     backstage.io/techdocs-ref: .
 spec:
   owner: backoffice-team
