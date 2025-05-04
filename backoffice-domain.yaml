@@ -1,0 +1,68 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: backoffice-system
+  title: Backoffice System
+  description: Handles internal operations like shipment logistics and invoice management.
+  annotations:
+    backstage.io/techdocs-ref: https://gitlab.com/ch-mc-b/autoshop-ms/app/backoffice
+spec:
+  owner: backoffice-team
+
+---
+# shipment
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: backoffice-shipment
+  description: Handles shipping logistics.
+spec:
+  type: service
+  lifecycle: production
+  owner: backoffice-team
+  system: backoffice-system
+  dependsOn:
+    - component:default/shop-webshop  
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: backoffice-shipment-api
+spec:
+  type: openapi
+  lifecycle: production
+  owner: backoffice-team
+  system: backoffice-system
+  definition: ./openapi/shipment.yaml
+  providesApis:
+    - backoffice-shipment-api
+
+# invoicing
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: backoffice-invoicing
+  description: Invoice generation and processing.
+spec:
+  type: service
+  lifecycle: production
+  owner: backoffice-team
+  system: backoffice-system
+  dependsOn:
+    - component:default/shop-webshop  
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: backoffice-invoicing-api
+spec:
+  type: openapi
+  lifecycle: production
+  owner: backoffice-team
+  system: backoffice-system
+  definition: ./openapi/invoicing.yaml
+  providesApis:
+    - backoffice-invoicing-api

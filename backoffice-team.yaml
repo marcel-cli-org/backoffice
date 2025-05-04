@@ -1,0 +1,36 @@
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: backoffice-team
+  description: Backoffice Team der Auto Shop GmbH
+  links:
+    - url: https://gitlab.com/ch-mc-b/autoshop-ms/app/backoffice
+      title: Sourcecode
+      icon: git  
+    - url: https://gitlab.com/ch-mc-b/autoshop-ms/app/backoffice/container_registry
+      title: Container Registry
+      icon: registry   
+spec:
+  type: team
+  parent: app
+  children: []
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: lisa.mueller
+spec:
+  profile:
+    displayName: Lisa Müller
+    email: lisa.mueller@autoshopgmbh.ch
+  memberOf: [backoffice-team]
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: thomas.schmidt
+spec:
+  profile:
+    displayName: Thomas Schmidt
+    email: thomas.schmidt@autoshopgmbh.ch
+  memberOf: [backoffice-team]
