@@ -6,7 +6,8 @@ metadata:
   description: Handles internal operations like shipment logistics and invoice management.
   annotations:
     gitlab.com/project-slug: ch-mc-b/autoshop-ms/app/backoffice
-    backstage.io/techdocs-ref: .
+    backstage.io/source-location: url:https://gitlab.com/ch-mc-b/autoshop-ms/app/backoffice
+    backstage.io/techdocs-ref: url:https://gitlab.com/ch-mc-b/autoshop-ms/app/backoffice   
 spec:
   owner: backoffice-team
 
